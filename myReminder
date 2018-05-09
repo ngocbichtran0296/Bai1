@@ -1,0 +1,55 @@
+  // Đọc file excel theo từng hàng rồi đến từng cột.
+    private void readExcelData(File inputFile) {
+
+        try {
+            InputStream inputStream = new FileInputStream(inputFile);
+            XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
+            XSSFSheet sheet = workbook.getSheetAt(0);
+            int rowsCount = sheet.getPhysicalNumberOfRows();
+            FormulaEvaluator formulaEvaluator = workbook.getCreationHelper().createFormulaEvaluator();
+            StringBuilder sb = new StringBuilder();
+
+            boolean canRead = true;
+            //try file excel invalid
+            for (int r = 0; r < rowsCount; r++) {
+                Row row = sheet.getRow(r);
+                int cellsCount = row.getPhysicalNumberOfCells();
+
+                if (cellsCount > 7) {
+                    canRead = false;
+                    toastMessage("Lỗi:Định dạng của file Excel không chính xác!");
+                    break;
+                }
+            }
+
+
+            if (canRead) {
+                //outter loop, loops through rows
+                for (int r = 0; r < rowsCount; r++) {
+                    Row row = sheet.getRow(r);
+                    int cellsCount = row.getPhysicalNumberOfCells();
+                    //inner loop, loops through columns
+                    for (int c = 0; c < cellsCount; c++) {
+                        //handles if there are to many columns on the excel sheet.
+                        String value = getCellAsString(row, c, formulaEvaluator);
+                        Log.d(TAG, "VALUE IS : " + value);
+                        sb.append(value + "_");
+                    }
+                    // Sau khi đọc xong 1 reminder (1 hàng)
+                    // Cách biệt bởi dấu %
+                    sb.append("%");
+                    Log.d(TAG, "STRING BULDER" + sb);
+                }
+
+                // Đưa chuỗi vừa nhận được tách thành các Reminder riêng biệt
+                // Ghi vào db
+                parseStringBuilder(sb);
+            }
+
+
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, "readExcelData: FileNotFoundException. " + e.getMessage());
+        } catch (IOException e) {
+            Log.e(TAG, "readExcelData: Error reading inputstream. " + e.getMessage());
+        }
+    }
